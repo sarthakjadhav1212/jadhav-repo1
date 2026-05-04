@@ -1,1 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIML Stats Lab | Sarthak Jadhav</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50 font-sans p-6">
+
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-8 border-b pb-4">
+            <h1 class="text-3xl font-bold text-blue-900">📊 AIML Student Stats Lab</h1>
+            <p class="text-gray-600">PES Modern College of Engineering | Statistics Workbench</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <h2 class="text-xl font-semibold mb-4">📥 Data Ingestion</h2>
+                
+                <label class="block text-sm font-medium text-gray-700 mb-2">Upload CSV File</label>
+                <input type="file" id="fileInput" accept=".csv" class="block w-full text-sm text-gray-500 mb-6 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+
+                <label class="block text-sm font-medium text-gray-700 mb-2">Manual Entry (comma separated)</label>
+                <textarea id="manualInput" rows="4" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 mb-4" placeholder="10, 20, 30, 45, 50..."></textarea>
+                
+                <button onclick="processData()" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition">Analyze Data</button>
+            </div>
+
+            <div class="md:col-span-2 space-y-6">
+                
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 rounded-lg shadow-sm border text-center">
+                        <p class="text-gray-500 text-xs uppercase">Mean</p>
+                        <p id="meanResult" class="text-2xl font-bold text-blue-600">-</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border text-center">
+                        <p class="text-gray-500 text-xs uppercase">Variance</p>
+                        <p id="varResult" class="text-2xl font-bold text-blue-600">-</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border text-center">
+                        <p class="text-gray-500 text-xs uppercase">Std Dev</p>
+                        <p id="stdResult" class="text-2xl font-bold text-blue-600">-</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border text-center">
+                        <p class="text-gray-500 text-xs uppercase">CV (%)</p>
+                        <p id="cvResult" class="text-2xl font-bold text-blue-600">-</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border">
+                    <canvas id="statsChart" height="150"></canvas>
+                </div>
+
+                <button onclick="window.print()" class="bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-black transition no-print">🖨️ Print Report</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let myChart = null;
+
+        function processData() {
+            const input = document.getElementById('manualInput').value;
+            const values = input.split(',').map(Number).filter(n => !isNaN(n));
+
+            if (values.length === 0) return alert("Please enter valid numbers");
+
+            // Calculations
+            const mean = values.reduce((a, b) => a + b, 0) / values.length;
+            const variance = values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
+            const stdDev = Math.sqrt(variance);
+            const cv = (stdDev / mean) * 100;
+
+            // Update UI
+            document.getElementById('meanResult').innerText = mean.toFixed(2);
+            document.getElementById('varResult').innerText = variance.toFixed(2);
+            document.getElementById('stdResult').innerText = stdDev.toFixed(2);
+            document.getElementById('cvResult').innerText = cv.toFixed(1) + "%";
+
+            // Update Chart
+            updateChart(values, mean);
+        }
+
+        function updateChart(data, mean) {
+            const ctx = document.getElementById('statsChart').getContext('2d');
+            
+            if (myChart) myChart.destroy();
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map((_, i) => `Point ${i+1}`),
+                    datasets: [{
+                        label: 'Data Values',
+                        data: data,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: { display: true, text: 'Dataset Sequence & Mean Trend' }
+                    }
+                }
+            });
+        }
+
+        // CSV Listener
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                document.getElementById('manualInput').value = reader.result.replace(/\n/g, ",");
+                processData();
+            };
+            reader.readAsText(e.target.files[0]);
+        });
+    </script>
+
+    <style>
+        @media print { .no-print { display: none !important; } }
+    </style>
+</body>
+</html>
 
